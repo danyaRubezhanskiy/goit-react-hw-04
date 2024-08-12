@@ -4,25 +4,40 @@ import toast, { Toaster } from "react-hot-toast";
 import ImageGallery from "./components/ImageGallery/ImageGallery";
 import { useState } from "react";
 import Loader from "./components/Loader/Loader";
+import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import ImageModal from "./components/ImageModal/ImageModal";
 
 function App() {
   const [images, setImages] = useState([]);
+  const [error, setError] = useState(null);
+  const [isLoading, setLoading] = useState();
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [largeImageUrl, setLargeImageUrl] = useState(null);
 
   const notify = () => toast.error("Please enter your search query");
 
-  const fetchPhotos = async (query) => {
+  const fetchPhotos = async (query, page) => {
     try {
       const { data } = await axios.get(
-        `https://api.unsplash.com/search/photos?query=${query}&per_page=${12}&client_id=ta_gU_VpEth5AI66-U4EWKQ4xudh-a8yAmiRRXyuWM0`
+        `https://api.unsplash.com/search/photos?query=${query}&per_page=${12}}&page=${page}&client_id=ta_gU_VpEth5AI66-U4EWKQ4xudh-a8yAmiRRXyuWM0`
       );
-      console.log(data);
-      setImages(data.results.map((result) => result.urls.small));
-      if (data.results.length === 0) {
-        toast.error("no photos");
+      const imagesData = data.results.map((result) => ({
+        smallUrl: result.urls.small, // маленькое изображение для галереи
+        largeUrl: result.urls.full, // большое изображение для модального окна
+      }));
+
+      if (page === 1) {
+        setImages(imagesData);
+      } else {
+        setImages((prevImages) => [...prevImages, ...imagesData]);
       }
+      setError(null);
     } catch (error) {
-      toast.error("Error fetching photos");
-      console.error(error);
+      setError("Error. Please try again.");
+      setImages([]);
     }
   };
 
@@ -30,17 +45,46 @@ function App() {
     if (values.query === "") {
       notify();
     } else {
+      console.log(images);
       fetchPhotos(values.query);
+      setQuery(values.query);
+      setPage(1);
     }
     actions.resetForm();
+  };
+
+  const loadMore = () => {
+    const newPage = page + 1;
+    fetchPhotos(query, newPage);
+    setPage(newPage);
+  };
+
+  const openModal = (imageUrl) => {
+    setLargeImageUrl(imageUrl);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setLargeImageUrl(null);
   };
 
   return (
     <div>
       <SearchBox onSubmit={onSubmit}></SearchBox>
+      {isLoading && <Loader></Loader>}
       <Toaster position="top-right" reverseOrder={false} />
-      <ImageGallery images={images}></ImageGallery>
-      <Loader></Loader>
+      {error ? (
+        <ErrorMessage message={error} />
+      ) : (
+        <ImageGallery images={images} onImageClick={openModal}></ImageGallery>
+      )}
+      {query !== "" && <LoadMoreBtn onClick={loadMore}></LoadMoreBtn>}
+      <ImageModal
+        isOpen={isModalOpen}
+        onRequestClose={closeModal}
+        largeImageUrl={largeImageUrl}
+      />
     </div>
   );
 }

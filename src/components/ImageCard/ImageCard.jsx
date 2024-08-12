@@ -1,8 +1,12 @@
 import css from "./ImageCard.module.css";
 
-const ImageCard = ({ smallUrl }) => {
+const ImageCard = ({ smallUrl, largeUrl, onImageClick }) => {
+  const handleClick = () => {
+    onImageClick(largeUrl);
+  };
+
   return (
-    <div>
+    <div onClick={handleClick}>
       <img className={css.image} src={smallUrl} alt="" />
     </div>
   );

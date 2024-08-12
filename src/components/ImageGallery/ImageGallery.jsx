@@ -1,12 +1,18 @@
+// components/ImageGallery/ImageGallery.js
+import React from "react";
 import ImageCard from "../ImageCard/ImageCard";
 import css from "./ImageGallery.module.css";
 
-const ImageGallery = ({ images }) => {
+const ImageGallery = ({ images, onImageClick }) => {
   return (
     <ul className={css.galleryList}>
-      {images.map((url, index) => (
+      {images.map((image, index) => (
         <li key={index}>
-          <ImageCard smallUrl={url} />
+          <ImageCard
+            smallUrl={image.smallUrl}
+            largeUrl={image.largeUrl}
+            onImageClick={onImageClick}
+          />
         </li>
       ))}
     </ul>
