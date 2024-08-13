@@ -2,7 +2,7 @@ import axios from "axios";
 import SearchBox from "./components/SearchBar/SearchBar";
 import toast, { Toaster } from "react-hot-toast";
 import ImageGallery from "./components/ImageGallery/ImageGallery";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Loader from "./components/Loader/Loader";
 import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
 import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
@@ -19,34 +19,39 @@ function App() {
 
   const notify = () => toast.error("Please enter your search query");
 
-  const fetchPhotos = async (query, page) => {
-    try {
-      const { data } = await axios.get(
-        `https://api.unsplash.com/search/photos?query=${query}&per_page=${12}}&page=${page}&client_id=ta_gU_VpEth5AI66-U4EWKQ4xudh-a8yAmiRRXyuWM0`
-      );
-      const imagesData = data.results.map((result) => ({
-        smallUrl: result.urls.small, // маленькое изображение для галереи
-        largeUrl: result.urls.full, // большое изображение для модального окна
-      }));
+  useEffect(() => {
+    if (!query) return;
+    const fetchPhotos = async (query, page) => {
+      setLoading(true);
+      try {
+        const { data } = await axios.get(
+          `https://api.unsplash.com/search/photos?query=${query}&per_page=${12}}&page=${page}&client_id=ta_gU_VpEth5AI66-U4EWKQ4xudh-a8yAmiRRXyuWM0`
+        );
+        const imagesData = data.results.map((result) => ({
+          smallUrl: result.urls.small, // маленькое изображение для галереи
+          largeUrl: result.urls.full, // большое изображение для модального окна
+        }));
 
-      if (page === 1) {
-        setImages(imagesData);
-      } else {
-        setImages((prevImages) => [...prevImages, ...imagesData]);
+        if (page === 1) {
+          setImages(imagesData);
+        } else {
+          setImages((prevImages) => [...prevImages, ...imagesData]);
+        }
+        setError(null);
+        setLoading(false);
+      } catch (error) {
+        setError("Error. Please try again.");
+        setImages([]);
       }
-      setError(null);
-    } catch (error) {
-      setError("Error. Please try again.");
-      setImages([]);
-    }
-  };
+    };
+    fetchPhotos(query, page);
+  }, [page, query]);
 
   const onSubmit = (values, actions) => {
-    if (values.query === "") {
+    if (values.query.trim() === "") {
       notify();
     } else {
       console.log(images);
-      fetchPhotos(values.query);
       setQuery(values.query);
       setPage(1);
     }
@@ -55,7 +60,7 @@ function App() {
 
   const loadMore = () => {
     const newPage = page + 1;
-    fetchPhotos(query, newPage);
+    setQuery(query);
     setPage(newPage);
   };
 

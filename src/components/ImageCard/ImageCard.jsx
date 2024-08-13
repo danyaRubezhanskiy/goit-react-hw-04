@@ -6,9 +6,7 @@ const ImageCard = ({ smallUrl, largeUrl, onImageClick }) => {
   };
 
   return (
-    <div onClick={handleClick}>
-      <img className={css.image} src={smallUrl} alt="" />
-    </div>
+    <img onClick={handleClick} className={css.image} src={smallUrl} alt="" />
   );
 };
 
